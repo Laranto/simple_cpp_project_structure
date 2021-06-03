@@ -4,7 +4,8 @@ STD := c++17
 # Compiler
 CXX := g++
 CXXF := -g -O0 -std=$(STD) -pthread 
-# CXXW := -Wall -Wextra -Werror
+CXXW := -Wall -Wextra -Werror
+CXXL := -D LOGURU_WITH_STREAMS=1 -D LOGURU_STACKTRACES=0
 # Linker
 LD := $(CXX)
 LF := -pthread -lpthread
@@ -32,6 +33,8 @@ SRC_PATHS := $(shell find $(SRC_DIR) -name '*.cpp')
 OBJ := $(addprefix $(OBJ_DIR)/,$(notdir $(SRC_PATHS:.cpp=.o)))
 
 # Includes
+INC_PATHS := $(shell find $(INC_DIR) -name '*.cpp')
+OBJ := $(OBJ) $(addprefix $(OBJ_DIR)/,$(notdir $(INC_PATHS:.cpp=.o)))
 INC_DIRS := $(wildcard $(INC_DIR)/*)
 INCLUDES := $(addprefix -I, $(INC_DIRS))
 
@@ -41,11 +44,13 @@ TEST_PATHS := $(shell find $(TEST_DIR) -name '*.cpp') $(SRC_PATHS_TEST)
 TEST_OBJ := $(addprefix $(OBJ_DIR)/,$(notdir $(TEST_PATHS:.cpp=.o)))
 
 # VPATH for searching for missing sources used for reference to %.cpp
-VPATH := $(dir $(SRC_PATHS) $(TEST_PATHS) )
+VPATH := $(dir $(SRC_PATHS) $(TEST_PATHS) $(INC_PATHS))
 
 .PHONY: clean test
 
 default: $(TARGET)
+	@echo -----------------------------------------------
+	@echo Build done, run with     $(TARGET)
 
 # Directory Creation
 
@@ -56,7 +61,7 @@ $(BIN_DIR):
 	mkdir -p $@
 
 $(OBJ_DIR)/%.o: %.cpp
-	$(CXX) $(CXXF) $(CXXW) $(INCLUDES) -c $< -o $@
+	$(CXX) $(CXXF) $(CXXW) $(CXXL) $(INCLUDES) -I$(SRC_DIR) -c $< -o $@
 
 $(TARGET): $(BIN_DIR) $(OBJ_DIR) $(OBJ)
 	$(LD) $(LF) $(OBJ) -o $@
